@@ -125,7 +125,7 @@ contract Raffle is VRFConsumerBaseV2Plus {
             });
 
         // get a random number from chainlink VRF v2.5
-        s_vrfCoordinator.requestRandomWords(request);
+        // s_vrfCoordinator.requestRandomWords(request);
     }
 
     // 覆写父合约中的方法，VRF生成的随机数会传入到该方法的数组randomWords参数中，数组长度为定义的NUM_WORDS，
