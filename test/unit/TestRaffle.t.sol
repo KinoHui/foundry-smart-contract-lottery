@@ -74,8 +74,11 @@ contract TestRaffle is Test {
         raffle.enterRaffle{value: ENTER_FEE}();
         vm.warp(block.timestamp + raffle.getInterval() + 1);
         vm.roll(block.number + 1);
+        console.log("state before perform: ", uint256(raffle.getRaffleState()));
         raffle.performUpkeep("");
         Raffle.RaffleState raffleState = raffle.getRaffleState();
+        console.log("state after perform: ", uint256(raffleState));
+
         // Act
         (bool upkeepNeeded, ) = raffle.checkUpkeep("");
         // Assert
@@ -91,5 +94,39 @@ contract TestRaffle is Test {
         vm.expectEmit(true, false, false, false, address(raffle));
         emit RaffleEntered(PLAYER);
         raffle.enterRaffle{value: ENTER_FEE}();
+    }
+
+    function testPerformUpkeepCanOnlyRunIfCheckUpkeepIsTrue() public {
+        // Arrange
+        vm.prank(PLAYER);
+        raffle.enterRaffle{value: ENTER_FEE}();
+        vm.warp(block.timestamp + raffle.getInterval() + 1);
+        vm.roll(block.number + 1);
+
+        // Act
+        raffle.performUpkeep("");
+    }
+
+    function testPerformUpkeepRevertsIfCheckUpkeepIsFalse() public {
+        // Arrange
+        uint256 initialBalance = 0;
+        uint256 numPlayers = 0;
+        uint256 state = uint256(raffle.getRaffleState());
+
+        // Act
+        vm.prank(PLAYER);
+        raffle.enterRaffle{value: ENTER_FEE}();
+        initialBalance += ENTER_FEE;
+
+        // Assert
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                Raffle.Raffle__UpkeepNotNeeded.selector,
+                initialBalance,
+                numPlayers + 1,
+                state
+            )
+        );
+        raffle.performUpkeep("");
     }
 }

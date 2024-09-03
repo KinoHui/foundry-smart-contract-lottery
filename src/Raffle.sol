@@ -1,3 +1,24 @@
+// Layout of Contract:
+// version
+// imports
+// errors
+// interfaces, libraries, contracts
+// Type declarations
+// State variables
+// Events
+// Modifiers
+// Functions
+
+// Layout of Functions:
+// constructor
+// receive function (if exists)
+// fallback function (if exists)
+// external
+// public
+// internal
+// private
+// view & pure functions
+
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
@@ -10,7 +31,7 @@ import {AutomationCompatibleInterface} from "@chainlink/contracts/src/v0.8/autom
  * @author jyh
  * @notice A comprehensive contract
  */
-contract Raffle is VRFConsumerBaseV2Plus {
+contract Raffle is VRFConsumerBaseV2Plus, AutomationCompatibleInterface {
     /**ERRORS */
     error Raffle__NotEnoughToEntrance();
     error Raffle__TransferFailed();
@@ -125,7 +146,7 @@ contract Raffle is VRFConsumerBaseV2Plus {
             });
 
         // get a random number from chainlink VRF v2.5
-        // s_vrfCoordinator.requestRandomWords(request);
+        s_vrfCoordinator.requestRandomWords(request);
     }
 
     // 覆写父合约中的方法，VRF生成的随机数会传入到该方法的数组randomWords参数中，数组长度为定义的NUM_WORDS，
