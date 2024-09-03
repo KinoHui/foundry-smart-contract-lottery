@@ -17,7 +17,7 @@ contract CreateSubscription is Script {
 
     function createSubscription(
         address vrfCoordinator
-    ) public returns (uint256, address) {
+    ) public returns (uint64, address) {
         console.log("Creating subscription on ChainID: ", block.chainid);
         // 该操作涉及链上操作，需要broadcast
         vm.startBroadcast();
@@ -26,7 +26,7 @@ contract CreateSubscription is Script {
         vm.stopBroadcast();
         console.log("Your sub Id is: ", subId);
         console.log("Please update subscriptionId in HelperConfig!");
-        return (uint256(subId), vrfCoordinator);
+        return (subId, vrfCoordinator);
     }
 
     function run() public {

@@ -23,7 +23,7 @@
 pragma solidity ^0.8.19;
 
 import {VRFConsumerBaseV2Plus} from "@chainlink/contracts/src/v0.8/vrf/dev/VRFConsumerBaseV2Plus.sol";
-import {VRFV2PlusClient} from "@chainlink/contracts/src/v0.8/vrf/dev/libraries/VRFV2PlusClient.sol";
+import {VRFCoordinatorV2Interface} from "@chainlink/contracts/src/v0.8/interfaces/VRFCoordinatorV2Interface.sol";
 import {AutomationCompatibleInterface} from "@chainlink/contracts/src/v0.8/automation/interfaces/AutomationCompatibleInterface.sol";
 
 /**
@@ -47,13 +47,14 @@ contract Raffle is VRFConsumerBaseV2Plus, AutomationCompatibleInterface {
         CALCULATING
     }
 
+    VRFCoordinatorV2Interface private immutable i_vrfCoordinator;
     /**State Variable */
     uint16 private constant REQUEST_CONFIRMATIONS = 3;
     uint32 private constant NUM_WORDS = 1;
     uint256 private immutable i_entrancePrice;
     // @dev duration of the lottery last (unit "s")
     uint256 private immutable i_interval;
-    uint256 private immutable i_subscriptionId;
+    uint64 private immutable i_subscriptionId;
     bytes32 private immutable i_keyHash;
     uint32 private immutable i_callbackGasLimit;
     uint256 private s_lastTimestamp;
@@ -70,9 +71,10 @@ contract Raffle is VRFConsumerBaseV2Plus, AutomationCompatibleInterface {
         uint256 interval,
         address vrfCoordinator,
         bytes32 gasLane,
-        uint256 subscriptionId,
+        uint64 subscriptionId,
         uint32 callbackGasLimit
     ) VRFConsumerBaseV2Plus(vrfCoordinator) {
+        i_vrfCoordinator = VRFCoordinatorV2Interface(vrfCoordinator);
         i_entrancePrice = entrance;
         i_interval = interval;
         i_keyHash = gasLane;
@@ -108,7 +110,12 @@ contract Raffle is VRFConsumerBaseV2Plus, AutomationCompatibleInterface {
      */
     function checkUpkeep(
         bytes memory /* checkData */
-    ) public view returns (bool upkeepNeeded, bytes memory /* performData */) {
+    )
+        public
+        view
+        override
+        returns (bool upkeepNeeded, bytes memory /* performData */)
+    {
         bool timePassed = (block.timestamp - s_lastTimestamp) >= i_interval;
         bool isOpen = s_raffleState == RaffleState.OPEN;
         bool hasBalance = address(this).balance > 0;
@@ -120,7 +127,7 @@ contract Raffle is VRFConsumerBaseV2Plus, AutomationCompatibleInterface {
     // 1. generate a random number
     // 2. use the random number to pick a winner
     // 3. automatic pick with the interval
-    function performUpkeep(bytes calldata /* performData */) external {
+    function performUpkeep(bytes calldata /* performData */) external override {
         (bool upkeepNeeded, ) = checkUpkeep("");
         if (!upkeepNeeded) {
             revert Raffle__UpkeepNotNeeded(
@@ -131,22 +138,29 @@ contract Raffle is VRFConsumerBaseV2Plus, AutomationCompatibleInterface {
         }
 
         s_raffleState = RaffleState.CALCULATING;
+        uint256 requestId = i_vrfCoordinator.requestRandomWords(
+            i_keyHash,
+            i_subscriptionId,
+            REQUEST_CONFIRMATIONS,
+            i_callbackGasLimit,
+            NUM_WORDS
+        );
 
-        VRFV2PlusClient.RandomWordsRequest memory request = VRFV2PlusClient
-            .RandomWordsRequest({
-                keyHash: i_keyHash,
-                subId: i_subscriptionId,
-                requestConfirmations: REQUEST_CONFIRMATIONS,
-                callbackGasLimit: i_callbackGasLimit,
-                numWords: NUM_WORDS,
-                extraArgs: VRFV2PlusClient._argsToBytes(
-                    // Set nativePayment to true to pay for VRF requests with Sepolia ETH instead of LINK
-                    VRFV2PlusClient.ExtraArgsV1({nativePayment: false})
-                )
-            });
+        // VRFV2PlusClient.RandomWordsRequest memory request = VRFV2PlusClient
+        //     .RandomWordsRequest({
+        //         keyHash: i_keyHash,
+        //         subId: i_subscriptionId,
+        //         requestConfirmations: REQUEST_CONFIRMATIONS,
+        //         callbackGasLimit: i_callbackGasLimit,
+        //         numWords: NUM_WORDS,
+        //         extraArgs: VRFV2PlusClient._argsToBytes(
+        //             // Set nativePayment to true to pay for VRF requests with Sepolia ETH instead of LINK
+        //             VRFV2PlusClient.ExtraArgsV1({nativePayment: false})
+        //         )
+        //     });
 
         // get a random number from chainlink VRF v2.5
-        s_vrfCoordinator.requestRandomWords(request);
+        // s_vrfCoordinator.requestRandomWords(requestId);
     }
 
     // 覆写父合约中的方法，VRF生成的随机数会传入到该方法的数组randomWords参数中，数组长度为定义的NUM_WORDS，
