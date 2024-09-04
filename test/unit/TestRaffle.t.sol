@@ -109,7 +109,7 @@ contract TestRaffle is Test {
         raffle.performUpkeep("");
     }
 
-    function testPerformUpkeepRevertsIfCheckUpkeepIsFalse() public {
+    function testPerformUpkeepRevertsIfCheckUpkeepIsFalse() public skipFork {
         // Arrange
         uint256 initialBalance = 0;
         uint256 numPlayers = 0;

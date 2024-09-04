@@ -24,7 +24,7 @@ contract DeployRaffle is Script {
             FundSubscription fundSubscription = new FundSubscription();
             fundSubscription.fundSubscription(
                 config.vrfCoordinator,
-                uint64(config.subscriptionId),
+                config.subscriptionId,
                 config.link,
                 config.deployerKey
             );
@@ -45,7 +45,7 @@ contract DeployRaffle is Script {
         addConsumer.addConsumer(
             address(raffle),
             config.vrfCoordinator,
-            uint64(config.subscriptionId),
+            config.subscriptionId,
             config.deployerKey
         );
         return (raffle, helpConfig);
