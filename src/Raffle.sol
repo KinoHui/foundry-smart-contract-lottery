@@ -64,6 +64,7 @@ contract Raffle is VRFConsumerBaseV2Plus, AutomationCompatibleInterface {
 
     event RaffleEntered(address indexed player);
     event WinnerPicked(address indexed recentWinner);
+    event RequestedRaffleWinner(uint256 indexed requestId);
 
     // 这里继承了VRFConsumerBaseV2Plus合约，该合约也有自己的constructor，因此在Raffle合约中的constructor参数中传递VRFC..合约构造函数所需的参数
     constructor(
@@ -146,6 +147,8 @@ contract Raffle is VRFConsumerBaseV2Plus, AutomationCompatibleInterface {
             NUM_WORDS
         );
 
+        emit RequestedRaffleWinner(requestId);
+
         // VRFV2PlusClient.RandomWordsRequest memory request = VRFV2PlusClient
         //     .RandomWordsRequest({
         //         keyHash: i_keyHash,
@@ -202,5 +205,21 @@ contract Raffle is VRFConsumerBaseV2Plus, AutomationCompatibleInterface {
 
     function getInterval() external view returns (uint256) {
         return i_interval;
+    }
+
+    function getVrfCoordinatorAddress() external view returns (address) {
+        return address(i_vrfCoordinator);
+    }
+
+    function getRecentWinner() public view returns (address) {
+        return s_recentWinner;
+    }
+
+    function getNumberOfPlayers() public view returns (uint256) {
+        return s_players.length;
+    }
+
+    function getLastTimeStamp() public view returns (uint256) {
+        return s_lastTimestamp;
     }
 }
