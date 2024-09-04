@@ -8,7 +8,7 @@ import {Vm} from "forge-std/Vm.sol";
 import {VRFCoordinatorV2Mock} from "@chainlink/contracts/src/v0.8/mocks/VRFCoordinatorV2Mock.sol";
 
 contract TestRaffle is Test {
-    event RaffleEntered(address indexed player);
+    event EnteredRaffle(address indexed player);
 
     Raffle raffle;
     address PLAYER = makeAddr("player");
@@ -29,7 +29,7 @@ contract TestRaffle is Test {
         // Arrange
         vm.prank(PLAYER);
         // Act / Assert
-        vm.expectRevert(Raffle.Raffle__NotEnoughToEntrance.selector);
+        vm.expectRevert(Raffle.Raffle__NotEnoughEthSent.selector);
         raffle.enterRaffle();
     }
 
@@ -94,7 +94,7 @@ contract TestRaffle is Test {
 
         // Act / Assert
         vm.expectEmit(true, false, false, false, address(raffle));
-        emit RaffleEntered(PLAYER);
+        emit EnteredRaffle(PLAYER);
         raffle.enterRaffle{value: ENTER_FEE}();
     }
 
@@ -157,9 +157,16 @@ contract TestRaffle is Test {
         assert(uint(raffleState) == 1); // 0 = open, 1 = calculating
     }
 
+    modifier skipFork() {
+        if (block.chainid != 31337) {
+            return;
+        }
+        _;
+    }
+
     function testFulfillRandomWordsCanOnlyBeCalledAfterPerformUpkeep(
         uint256 requestId
-    ) public raffleEntredAndTimePassed {
+    ) public raffleEntredAndTimePassed skipFork {
         // Arrange
         address vrfCoordinator = raffle.getVrfCoordinatorAddress();
         // Act / Assert
@@ -174,6 +181,7 @@ contract TestRaffle is Test {
     function testFulfillRandomWordsPicksAWinnerRestesAndSendsMoney()
         public
         raffleEntredAndTimePassed
+        skipFork
     {
         // Arrange
         address vrfCoordinator = raffle.getVrfCoordinatorAddress();
