@@ -59,7 +59,7 @@ contract HelpConfig is Script, CodeConstants {
                 callbackGasLimit: 500000, //500,000 gas
                 subscriptionId: 9247156222557764362167166091870431165073662257169743031179437474952927603166,
                 link: 0x779877A7B0D9E8603169DdbD7836e478b4624789,
-                deployerKey: vm.envUint("SEPOLIA_PRIVATE_KEY")
+                deployerKey: vm.envUint("PRIVATE_KEY")
             });
     }
 
