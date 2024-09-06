@@ -7,7 +7,7 @@ abstract contract CodeConstants {
 }
 
 import {Script} from "forge-std/Script.sol";
-import {VRFCoordinatorV2Mock} from "@chainlink/contracts/src/v0.8/mocks/VRFCoordinatorV2Mock.sol";
+import {VRFCoordinatorV2PlusMock} from "@chainlink/contracts/src/v0.8/vrf/mocks/VRFCoordinatorV2PlusMock.sol";
 import {LinkToken} from "../test/mocks/LinkToken.sol";
 
 contract HelpConfig is Script, CodeConstants {
@@ -15,15 +15,18 @@ contract HelpConfig is Script, CodeConstants {
 
     NetworkConfig localNetworkConfig;
     mapping(uint256 => NetworkConfig) networkConfigs;
+    uint256 public constant DEFAULT_ANVIL_KEY =
+        0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80;
 
     struct NetworkConfig {
         uint256 entranceFee;
         uint256 interval;
         address vrfCoordinator;
         bytes32 gasLane;
-        uint64 subscriptionId;
+        uint256 subscriptionId;
         uint32 callbackGasLimit;
         address link;
+        uint256 deployerKey;
     }
 
     constructor() {
@@ -46,7 +49,7 @@ contract HelpConfig is Script, CodeConstants {
         return getConfigByChainId(block.chainid);
     }
 
-    function getSepoliaEthConfig() public pure returns (NetworkConfig memory) {
+    function getSepoliaEthConfig() public view returns (NetworkConfig memory) {
         return
             NetworkConfig({
                 entranceFee: 0.01 ether, //1e16
@@ -54,8 +57,9 @@ contract HelpConfig is Script, CodeConstants {
                 vrfCoordinator: 0x9DdfaCa8183c41ad55329BdeeD9F6A8d53168B1B,
                 gasLane: 0x787d74caea10b2b357790d5b5247c2f63d1d91572a9846f780606e4d953677ae,
                 callbackGasLimit: 500000, //500,000 gas
-                subscriptionId: 0,
-                link: 0x779877A7B0D9E8603169DdbD7836e478b4624789
+                subscriptionId: 9247156222557764362167166091870431165073662257169743031179437474952927603166,
+                link: 0x779877A7B0D9E8603169DdbD7836e478b4624789,
+                deployerKey: vm.envUint("PRIVATE_KEY")
             });
     }
 
@@ -80,10 +84,10 @@ contract HelpConfig is Script, CodeConstants {
         uint96 baseFee = 0.25 ether; // To be understood as 0.25 LINK
         uint96 gasPriceLink = 1e9; // 1 gwei LINK
         vm.startBroadcast();
-        VRFCoordinatorV2Mock vrfCoordinatorV2Mock = new VRFCoordinatorV2Mock(
-            baseFee,
-            gasPriceLink
-        );
+        VRFCoordinatorV2PlusMock vrfCoordinatorV2Mock = new VRFCoordinatorV2PlusMock(
+                baseFee,
+                gasPriceLink
+            );
         LinkToken link = new LinkToken();
         vm.stopBroadcast();
         return
@@ -94,7 +98,8 @@ contract HelpConfig is Script, CodeConstants {
                 gasLane: 0x787d74caea10b2b357790d5b5247c2f63d1d91572a9846f780606e4d953677ae,
                 subscriptionId: 0, // If left as 0, our scripts will create one!
                 callbackGasLimit: 500000, // 500,000 gas
-                link: address(link)
+                link: address(link),
+                deployerKey: DEFAULT_ANVIL_KEY
             });
     }
 }
