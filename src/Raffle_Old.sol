@@ -19,7 +19,7 @@
 // private
 // view & pure functions
 
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: None
 pragma solidity ^0.8.19;
 
 import {VRFConsumerBaseV2Plus} from "@chainlink/contracts/src/v0.8/vrf/dev/VRFConsumerBaseV2Plus.sol";
